@@ -14,7 +14,6 @@
     <link rel="stylesheet" href="styles.css">
 
     <style>
-
         #row-description {
             display: flex;
             flex-direction: row;
@@ -89,42 +88,46 @@
             font-size: 0.9rem;
             margin-bottom: 10px;
         }
+
         .clamped-description {
             display: -webkit-box;
-            display: -moz-box;        
-            display: -ms-flexbox;     
-            display: box;             /* Standard (legacy) */
-            display: -webkit-box;     /* Most reliable for webkit-based browsers */
+            display: -moz-box;
+            display: -ms-flexbox;
+            display: box;
+            /* Standard (legacy) */
+            display: -webkit-box;
+            /* Most reliable for webkit-based browsers */
             -webkit-box-orient: vertical;
             box-orient: vertical;
             -webkit-line-clamp: 4;
-            line-clamp: 4; /* This is currently not well-supported without -webkit prefix */
+            line-clamp: 4;
+            /* This is currently not well-supported without -webkit prefix */
             overflow: hidden;
             text-overflow: ellipsis;
-            max-height: 7.5em; /* Approx 5 lines depending on font-size/line-height */
+            max-height: 7.5em;
+            /* Approx 5 lines depending on font-size/line-height */
             position: relative;
             transition: max-height 0.3s ease;
-          }
-          
-          /* Expanded overrides */
-          .clamped-description.expanded {
+        }
+
+        /* Expanded overrides */
+        .clamped-description.expanded {
             display: block;
             max-height: none !important;
             overflow: visible;
             -webkit-line-clamp: unset;
             line-clamp: unset;
             -webkit-box-orient: initial;
-          }
-          
-          
-          .expand-toggle {
+        }
+
+
+        .expand-toggle {
             color: rgb(64 64 71);
             cursor: pointer;
             font-size: 0.9em;
             margin-top: 4px;
             display: inline-block;
-          }
-          
+        }
     </style>
 
 </head>
@@ -148,7 +151,36 @@
                 <i class="bi bi-upload"></i> Datachat
             </p>
         </nav>
-        <div class="content" style="margin-top:2.2rem; padding: 20px;">
+        <div id="app-overview" style="max-width:80%; margin-top:4rem;padding:32px 24px;margin-left:2rem;">
+            <h2>Welcome to Ticket AI Assist</h2>
+    <p>
+        Unlock the future of support ticket management with Ticket AI Assist! This intelligent platform is designed to
+        transform your workflow, making it faster, more efficient, and more accurate.
+    </p>
+    <p>
+        Ticket AI Assist empowers your team to:
+    </p>
+    <ul style="text-align:left;">
+        <li><b>Smartly Organize:</b> Effortlessly sort and filter tickets based on key criteria like status,
+            classification, SLA adherence, and assignee.</li>
+        <li><b>Resolve Issues Faster:</b> Access AI-powered summaries and instantly generate professional email
+            responses, saving valuable time and resources.</li>
+        <li><b>Ensure Consistent Support:</b> Quickly identify similar tickets and leverage AI-suggested resolutions for
+            consistent and effective problem-solving.</li>
+    </ul>
+    <p>
+        With Ticket AI Assist, you can focus on what matters most: providing exceptional support and exceeding customer
+        expectations.
+    </p>
+    <p>
+        Ready to experience the power of AI in your support operations?
+    </p>
+    <button id="proceed-btn" class="btn btn-secondary btn-sm">Proceed</button>
+        </div>
+        <div class="content" id="main-content" style="margin-top:2.2rem; padding: 20px; display:none;">
+            <button id="back-to-home-btn" class="btn btn-link">
+                <i class="bi bi-arrow-left"></i> Back to Home
+            </button>
             <div class="tab-content" id="tabContent">
 
                 <div id="home-tab" class="tab active">
@@ -263,7 +295,7 @@
                                 <th style="width: 5%;" class="sortable active-sort" data-sort-col='"Ticket status"'
                                     data-sort-dir="ASC">Status <i class="bi bi-arrow-up"></i></th>
                                 <th style="width: 12%;" class="sortable" data-sort-col='"Ticket created - Date"'>
-                                    Assigned On</th> 
+                                    Assigned On</th>
                                 <th style="width: 10%;" class="sortable" data-sort-col='"Assignee name"'>Assigned To
                                 </th>
                                 <th style="width: 10%;" class="sortable" data-sort-col='SLA'>SLA Status</th>
@@ -274,27 +306,31 @@
 
                         </tbody>
                     </table>
-                    
+
 
                     <div id="row-description" style="display: none;">
                         <!-- Left Pane -->
                         <div class="left-pane">
-                            <button id="back-to-table" class="btn btn-link mb-3" style="text-align: left; margin-left:0.25rem;">
+                            <button id="back-to-table" class="btn btn-link mb-3"
+                                style="text-align: left; margin-left:0.25rem;">
                                 <i class="bi bi-arrow-left"></i> Back to Tickets
                             </button>
                             <div id="row-detail-content" style="border: 1px solid #ccc;
     border-radius: 0.25rem; padding:10px; margin-bottom:10px"></div>
                             <div id="ai-assitance">
-                                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ccc; padding-bottom: 8px;">
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ccc; padding-bottom: 8px;">
                                     <p style="font-weight: 600; font-size: 1rem; color: #686262; margin: 0;">
                                         Response Email Draft
                                     </p>
-                                    
+
                                     <div>
-                                        <button id="copy-button" class="btn btn-outline-secondary btn-sm" style="font-size: 0.8rem;">
+                                        <button id="copy-button" class="btn btn-outline-secondary btn-sm"
+                                            style="font-size: 0.8rem;">
                                             <i class="bi bi-clipboard"></i> Copy
                                         </button>
-                                        <button id="edit-button" class="btn btn-outline-secondary btn-sm" style="font-size: 0.8rem;">
+                                        <button id="edit-button" class="btn btn-outline-secondary btn-sm"
+                                            style="font-size: 0.8rem;">
                                             <i class="bi bi-pencil-square"></i> Edit
                                         </button>
                                     </div>
@@ -314,7 +350,9 @@
                                 <div id="llm-content"></div>
                             </div>
                             <div class="assist-tab-content" id="assist-history-tab" style="display:none;"></div>
-                            <div id="related-ticket-detail" style="display: none; border: 1px solid #ccc; border-radius: 0.25rem; padding:10px; margin-top:10px;"></div>
+                            <div id="related-ticket-detail"
+                                style="display: none; border: 1px solid #ccc; border-radius: 0.25rem; padding:10px; margin-top:10px;">
+                            </div>
                         </div>
                     </div>
                 </div>
