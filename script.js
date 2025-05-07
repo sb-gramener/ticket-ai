@@ -4,6 +4,23 @@ import { unsafeHTML } from "https://cdn.jsdelivr.net/npm/lit-html@3/directives/u
 document.addEventListener("DOMContentLoaded", function () {
     const homeTabButton = document.getElementById("datachat-tab-button");
     loadContent('datachat-tab', homeTabButton);
+    const overview = document.getElementById('app-overview');
+    const mainContent = document.getElementById('main-content');
+    const proceedBtn = document.getElementById('proceed-btn');
+    const backBtn = document.getElementById('back-to-home-btn');
+
+    if (proceedBtn) {
+        proceedBtn.addEventListener('click', function() {
+            overview.style.display = 'none';
+            mainContent.style.display = '';
+        });
+    }
+    if (backBtn) {
+        backBtn.addEventListener('click', function() {
+            mainContent.style.display = 'none';
+            overview.style.display = '';
+        });
+    }
 });
 
 let activeTabButton = null;
@@ -1458,7 +1475,7 @@ async function setupRowClickListener() {
         // Now, split the string by commas to get an array of IDs
         ticketIdsArray = ticketIdsArray.split(',').map(id => id.trim()); // Ensure each ID is trimmed
 
-        // console.log("Cleaned ticketIdsArray:", ticketIdsArray);
+        console.log("Cleaned ticketIdsArray:", ticketIdsArray);
 
         // Now, proceed with the rest of the logic
         const similarTicketDetails = ticketIdsArray.map(ticketId => {
@@ -1466,7 +1483,7 @@ async function setupRowClickListener() {
         }).filter(t => t); // Filter out any undefined values
 
         // Debugging the similarTicketDetails
-        // console.log("Similar ticket details:", similarTicketDetails);
+        console.log("Similar ticket details:", similarTicketDetails);
 
         // Create the HTML for the table
         let tableHTML = `
@@ -1651,3 +1668,4 @@ editButton.addEventListener("click", function () {
     const isEditable = emailContent.getAttribute("contenteditable") === "true";
     emailContent.setAttribute("contenteditable", !isEditable);
 });
+
