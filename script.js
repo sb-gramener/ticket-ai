@@ -1458,7 +1458,7 @@ async function setupRowClickListener() {
         // Now, split the string by commas to get an array of IDs
         ticketIdsArray = ticketIdsArray.split(',').map(id => id.trim()); // Ensure each ID is trimmed
 
-        console.log("Cleaned ticketIdsArray:", ticketIdsArray);
+        // console.log("Cleaned ticketIdsArray:", ticketIdsArray);
 
         // Now, proceed with the rest of the logic
         const similarTicketDetails = ticketIdsArray.map(ticketId => {
@@ -1466,7 +1466,7 @@ async function setupRowClickListener() {
         }).filter(t => t); // Filter out any undefined values
 
         // Debugging the similarTicketDetails
-        console.log("Similar ticket details:", similarTicketDetails);
+        // console.log("Similar ticket details:", similarTicketDetails);
 
         // Create the HTML for the table
         let tableHTML = `
