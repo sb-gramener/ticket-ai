@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket AI Assist</title>
+    <link rel="icon" href="https://raw.githubusercontent.com/gramener/assets/main/straive-favicon.svg">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html-to-markdown@0.0.10/html-to-markdown.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+
+    <style>
+
+        #row-description {
+            display: flex;
+            flex-direction: row;
+            padding: 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            background: #fff;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            gap: 15px;
+        }
+
+        .left-pane,
+        .right-pane {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        #row-detail-content {
+            flex: 1;
+            overflow: auto;
+            padding-bottom: 10px;
+        }
+
+        #ai-assitance {
+            resize: vertical;
+            overflow: auto;
+            border: 1px solid #ccc;
+            border-radius: 0.25rem;
+            padding: 10px;
+            min-height: 100px;
+            max-height: auto;
+        }
+
+        #email-content-assist {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .assist-tabs {
+            display: flex;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .assist-tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            background: #f1f1f1;
+            border: 1px solid #ccc;
+            border-bottom: none;
+            margin-right: 5px;
+            border-radius: 5px 5px 0 0;
+        }
+
+        .assist-tab.active {
+            background: #fff;
+            font-weight: bold;
+        }
+
+        .assist-tab-content {
+            border: 1px solid #ccc;
+            padding: 15px;
+            background: #fff;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        #back-to-table {
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        .clamped-description {
+            display: -webkit-box;
+            display: -moz-box;        
+            display: -ms-flexbox;     
+            display: box;             /* Standard (legacy) */
+            display: -webkit-box;     /* Most reliable for webkit-based browsers */
+            -webkit-box-orient: vertical;
+            box-orient: vertical;
+            -webkit-line-clamp: 4;
+            line-clamp: 4; /* This is currently not well-supported without -webkit prefix */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-height: 7.5em; /* Approx 5 lines depending on font-size/line-height */
+            position: relative;
+            transition: max-height 0.3s ease;
+          }
+          
+          /* Expanded overrides */
+          .clamped-description.expanded {
+            display: block;
+            max-height: none !important;
+            overflow: visible;
+            -webkit-line-clamp: unset;
+            line-clamp: unset;
+            -webkit-box-orient: initial;
+          }
+          
+          
+          .expand-toggle {
+            color: rgb(64 64 71);
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-top: 4px;
+            display: inline-block;
+          }
+          
+    </style>
+
+</head>
+
+<body style="zoom:90%">
+    <div class="main-container">
+        <nav class="navbar navbar-expand-lg"
+            style="position: fixed; top: 0; left: 0; width: 100%; z-index: 1030; background-color: rgb(237, 240, 243)">
+            <div style="font-size: 1.3rem; color: #2b2830;">
+                <img fetchpriority="high" class="logo-main logo-reg"
+                    src="https://www.straive.com/wp-content/uploads/2024/12/Website-Logo-HD-1-172x48.png" height="35"
+                    width="120" alt="Straive Website Logo" style="margin-left: 1rem;">
+                | Ticket AI Assist
+            </div>
+        </nav>
+        <nav class="sidebar" style="margin-top: 4rem; margin-left: 0.5rem; display:none">
+            <p class="btn" data-tab="home-tab" id="home-tab-button">
+                <i class="bi bi-house"></i> Home
+            </p>
+            <p class="btn" data-tab="datachat-tab" id="datachat-tab-button">
+                <i class="bi bi-upload"></i> Datachat
+            </p>
+        </nav>
+        <div class="content" style="margin-top:2.2rem; padding: 20px;">
+            <div class="tab-content" id="tabContent">
+
+                <div id="home-tab" class="tab active">
+
+                </div>
+
+                <div id="datachat-tab" class="tab">
+                    <form id="upload" class="mx-auto narrative "></form>
+
+                    <div>
+                        <div id="tables-container" class="table-responsive" style="display:none;"></div>
+                        <div id="sql" class="narrative mx-auto my-3"></div>
+                        <div id="result" class="table-responsive container mx-auto"></div>
+                    </div>
+
+                </div>
+            </div>
+            <div id="ticket-table-content">
+                <!-- Filter Row 1: Time, Sort, Filters, Search, Pagination -->
+                <div class="filters-row1">
+                    <!-- Left Filters -->
+                    <div class="d-flex align-items-center flex-wrap gap-2">
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle time-range-btn"
+                                type="button">
+                                All Time
+                            </button>
+                            <!-- Add dropdown menu items if needed -->
+                        </div>
+                        <!-- <div class="btn-group" role="group" aria-label="Sort by">
+                            <button type="button" class="btn btn-sm btn-secondary sort-by-btn active"
+                                data-sort="sequence">Sequence</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary sort-by-btn"
+                                data-sort="priority">Priority</button>
+                        </div> -->
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle classification-filter-btn"
+                                type="button">
+                                All Categories
+                            </button>
+                            <ul class="dropdown-menu classification-dropdown-menu">
+                                <!-- JS will populate this -->
+                                <li><a class="dropdown-item" href="#" data-value="all">All Categories</a></li>
+                            </ul>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle sla-filter-btn"
+                                type="button">
+                                SLA Status All
+                            </button>
+                            <ul class="dropdown-menu sla-dropdown-menu">
+                                <li><a class="dropdown-item" href="#" data-value="all">All</a></li>
+                                <li><a class="dropdown-item" href="#" data-value="On Time">On Time</a></li>
+                                <li><a class="dropdown-item" href="#" data-value="Due Soon">Due Soon</a></li>
+                                <li><a class="dropdown-item" href="#" data-value="Overdue">Overdue</a></li>
+                                <!-- Add more based on your actual SLA values -->
+                            </ul>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle assigned-filter-btn"
+                                type="button">
+                                Assigned To All
+                            </button>
+                            <ul class="dropdown-menu assigned-dropdown-menu">
+                                <!-- JS will populate this -->
+                                <li><a class="dropdown-item" href="#" data-value="all">All</a></li>
+                            </ul>
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary refresh-btn"><i
+                                class="bi bi-arrow-clockwise"></i> Refresh</button>
+                    </div>
+
+                    <!-- Right Search/Pagination -->
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="search" class="form-control form-control-sm search-input" placeholder="Search..."
+                            style="width: 150px;">
+                        <!-- Pagination Placeholder -->
+                        <span class="pagination-info text-muted small">1-20 of 0</span>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-secondary pagination-prev" disabled>&lt;</button>
+                            <button class="btn btn-sm btn-outline-secondary pagination-next" disabled>&gt;</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter Row 2: Summary Buttons -->
+                <div class="filters-row2">
+                    <button class="btn btn-sm filter-summary-btn active" data-status-filter="all">All Emails <span
+                            class="badge bg-secondary" id="count-all">0</span></button>
+                    <button class="btn btn-sm filter-summary-btn" data-status-filter="New">New Mails <span
+                            class="badge bg-secondary" id="count-new">0</span></button>
+                    <!-- Assuming 'New' is a status -->
+                    <button class="btn btn-sm filter-summary-btn" data-status-filter="In-progress">In Progress <span
+                            class="badge bg-secondary" id="count-in-progress">0</span></button>
+                    <button class="btn btn-sm filter-summary-btn" data-status-filter="Unclassified">Unclassified <span
+                            class="badge bg-secondary" id="count-unclassified">0</span></button>
+                    <!-- Assuming 'Unclassified' is a classification or status -->
+                </div>
+
+                <!-- Ticket Table -->
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th style="width: 2%;"><input type="checkbox" class="form-check-input"
+                                        id="select-all-tickets"></th>
+                                <th style="width: 8%;" class="sortable" data-sort-col='"Ticket ID"'>Ticket ID</th>
+                                <th style="width: 25%;" class="sortable" data-sort-col='description'>Description</th>
+                                <th style="width: 8%;" class="sortable" data-sort-col='UPC'>UPC</th>
+                                <th style="width: 10%;" class="sortable" data-sort-col='Classification'>Classifications
+                                </th>
+                                <th style="width: 5%;" class="sortable active-sort" data-sort-col='"Ticket status"'
+                                    data-sort-dir="ASC">Status <i class="bi bi-arrow-up"></i></th>
+                                <th style="width: 12%;" class="sortable" data-sort-col='"Ticket created - Date"'>
+                                    Assigned On</th> 
+                                <th style="width: 10%;" class="sortable" data-sort-col='"Assignee name"'>Assigned To
+                                </th>
+                                <th style="width: 10%;" class="sortable" data-sort-col='SLA'>SLA Status</th>
+                                <th style="width: 8%;" class="sortable" data-sort-col='Priority'>Priority</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ticket-table-body">
+
+                        </tbody>
+                    </table>
+                    
+
+                    <div id="row-description" style="display: none;">
+                        <!-- Left Pane -->
+                        <div class="left-pane">
+                            <button id="back-to-table" class="btn btn-link mb-3" style="text-align: left; margin-left:0.25rem;">
+                                <i class="bi bi-arrow-left"></i> Back to Tickets
+                            </button>
+                            <div id="row-detail-content" style="border: 1px solid #ccc;
+    border-radius: 0.25rem; padding:10px; margin-bottom:10px"></div>
+                            <div id="ai-assitance">
+                                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ccc; padding-bottom: 8px;">
+                                    <p style="font-weight: 600; font-size: 1rem; color: #686262; margin: 0;">
+                                        Response Email Draft
+                                    </p>
+                                    
+                                    <div>
+                                        <button id="copy-button" class="btn btn-outline-secondary btn-sm" style="font-size: 0.8rem;">
+                                            <i class="bi bi-clipboard"></i> Copy
+                                        </button>
+                                        <button id="edit-button" class="btn btn-outline-secondary btn-sm" style="font-size: 0.8rem;">
+                                            <i class="bi bi-pencil-square"></i> Edit
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="email-llm-content" style="padding:2px" contenteditable="false">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Pane -->
+                        <div class="right-pane" id="email-content-assist">
+                            <div class="assist-tabs">
+                                <div class="assist-tab" data-tab="summary">Summary & Action Items</div>
+                                <div class="assist-tab" data-tab="history">Similar Tickets</div>
+                            </div>
+                            <div class="assist-tab-content" id="assist-summary-tab">
+                                <div id="llm-content"></div>
+                            </div>
+                            <div class="assist-tab-content" id="assist-history-tab" style="display:none;"></div>
+                            <div id="related-ticket-detail" style="display: none; border: 1px solid #ccc; border-radius: 0.25rem; padding:10px; margin-top:10px;"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Lower Pagination (Optional) -->
+                <div class="d-flex justify-content-end align-items-center mt-2">
+                    <span class="pagination-info text-muted small me-2">1-20 of 0</span>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-secondary pagination-prev" disabled>&lt;</button>
+                        <button class="btn btn-sm btn-outline-secondary pagination-next" disabled>&gt;</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" type="module"></script>
+    <script src="script.js" type="module"></script>
+
+</body>
+
+</html>
