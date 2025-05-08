@@ -80,7 +80,6 @@
             border: 1px solid #ccc;
             padding: 15px;
             background: #fff;
-            flex: 1;
             overflow-y: auto;
         }
 
@@ -94,23 +93,18 @@
             display: -moz-box;
             display: -ms-flexbox;
             display: box;
-            /* Standard (legacy) */
             display: -webkit-box;
-            /* Most reliable for webkit-based browsers */
             -webkit-box-orient: vertical;
             box-orient: vertical;
             -webkit-line-clamp: 4;
             line-clamp: 4;
-            /* This is currently not well-supported without -webkit prefix */
             overflow: hidden;
             text-overflow: ellipsis;
             max-height: 7.5em;
-            /* Approx 5 lines depending on font-size/line-height */
             position: relative;
             transition: max-height 0.3s ease;
         }
 
-        /* Expanded overrides */
         .clamped-description.expanded {
             display: block;
             max-height: none !important;
@@ -206,7 +200,6 @@
                                 type="button">
                                 All Time
                             </button>
-                            <!-- Add dropdown menu items if needed -->
                         </div>
                         <!-- <div class="btn-group" role="group" aria-label="Sort by">
                             <button type="button" class="btn btn-sm btn-secondary sort-by-btn active"
@@ -220,7 +213,6 @@
                                 All Categories
                             </button>
                             <ul class="dropdown-menu classification-dropdown-menu">
-                                <!-- JS will populate this -->
                                 <li><a class="dropdown-item" href="#" data-value="all">All Categories</a></li>
                             </ul>
                         </div>
@@ -234,7 +226,6 @@
                                 <li><a class="dropdown-item" href="#" data-value="On Time">On Time</a></li>
                                 <li><a class="dropdown-item" href="#" data-value="Due Soon">Due Soon</a></li>
                                 <li><a class="dropdown-item" href="#" data-value="Overdue">Overdue</a></li>
-                                <!-- Add more based on your actual SLA values -->
                             </ul>
                         </div>
                         <div class="dropdown">
@@ -243,7 +234,6 @@
                                 Assigned To All
                             </button>
                             <ul class="dropdown-menu assigned-dropdown-menu">
-                                <!-- JS will populate this -->
                                 <li><a class="dropdown-item" href="#" data-value="all">All</a></li>
                             </ul>
                         </div>
@@ -255,7 +245,7 @@
                     <div class="d-flex align-items-center gap-2">
                         <input type="search" class="form-control form-control-sm search-input" placeholder="Search..."
                             style="width: 150px;">
-                        <!-- Pagination Placeholder -->
+
                         <span class="pagination-info text-muted small">1-20 of 0</span>
                         <div class="btn-group">
                             <button class="btn btn-sm btn-outline-secondary pagination-prev" disabled>&lt;</button>
@@ -270,12 +260,12 @@
                             class="badge bg-secondary" id="count-all">0</span></button>
                     <button class="btn btn-sm filter-summary-btn" data-status-filter="New">New Mails <span
                             class="badge bg-secondary" id="count-new">0</span></button>
-                    <!-- Assuming 'New' is a status -->
+                    
                     <button class="btn btn-sm filter-summary-btn" data-status-filter="In-progress">In Progress <span
                             class="badge bg-secondary" id="count-in-progress">0</span></button>
                     <button class="btn btn-sm filter-summary-btn" data-status-filter="Unclassified">Unclassified <span
                             class="badge bg-secondary" id="count-unclassified">0</span></button>
-                    <!-- Assuming 'Unclassified' is a classification or status -->
+                
                 </div>
 
                 <!-- Ticket Table -->
@@ -354,7 +344,7 @@
                         </div>
                     </div>
                 </div>
-                <!-- Lower Pagination (Optional) -->
+
                 <div class="d-flex justify-content-end align-items-center mt-2">
                     <span class="pagination-info text-muted small me-2">1-20 of 0</span>
                     <div class="btn-group">
