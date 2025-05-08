@@ -155,8 +155,6 @@ marked.use({
 });
 
 // ------------------ Fetch LLM Token (Optional) ------------------
-
-
 let token;
 try {
     token = (
@@ -355,17 +353,15 @@ const DB = {
                     }
                 ];
                 
-
-                // First add all columns to the table
                 for (const colDef of columnDefinitions) {
                     const alterSQL = `ALTER TABLE [${tableName}] ADD COLUMN [${colDef.name}] ${colDef.type}`;
                     db.exec(alterSQL);
                     queryHistory.push(alterSQL);
                 }
-                // Then update all columns in one batch
+
                 await updateMultipleColumns(tableName, columnDefinitions);
 
-                drawTables();  // Refresh UI after updates
+                drawTables(); 
 
             } else {
                 console.warn("No comments column found. Skipping sentiment analysis.");
@@ -378,13 +374,10 @@ const DB = {
 
         let cols = Object.keys(rows[0]);
         const typeMap = {};
-        // console.log(cols);
 
         for (let col of cols) {
             const sampleValue = rows[0][col];
-            // console.log(typeof (sampleValue), sampleValue);
             if (typeof sampleValue === "string") {
-                // Check for valid date-time formats
                 if (sampleValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
                     typeMap[col] = "TEXT";
                 } else if (sampleValue.match(/^\d{2}:\d{2}:\d{2}$/)) {
@@ -413,13 +406,11 @@ const DB = {
             }
         }
 
-        // Create SQL table with modified columns
         const createSQL = `CREATE TABLE IF NOT EXISTS ${tableName} (
             ${Object.keys(typeMap).map((col) => `"${col}" ${typeMap[col]}`).join(", ")}
         )`;
         db.exec(createSQL);
 
-        // Prepare insert statement
         let newCols = Object.keys(typeMap);
         const insertSQL = `INSERT INTO ${tableName} (${newCols.map((c) => `"${c}"`).join(", ")}) VALUES (${newCols.map(() => "?").join(", ")})`;
 
@@ -432,16 +423,15 @@ const DB = {
                 if (col.endsWith("_date") || col.endsWith("_time")) {
                     let originalCol = col.replace(/_(date|time)$/, "");
                     if (row[originalCol]) {
-                        // Adjusted to support both formats
                         let regexDateTime = /^(?:(\d{4}-\d{2}-\d{2})|(\d{2}-\d{2}-\d{4})) (\d{2}:\d{2})(?::\d{2})?$/;
                         let matches = row[originalCol].match(regexDateTime);
                         if (matches) {
-                            let datePart = matches[1] || matches[2]; // YYYY-MM-DD or DD-MM-YYYY
+                            let datePart = matches[1] || matches[2]; 
                             let timePart = matches[3];
-                            // For Date Formatting need to swap if from DD-MM-YYYY to YYYY-MM-DD
+
                             if (matches[2]) {
                                 const [day, month, year] = datePart.split('-');
-                                datePart = `${year}-${month}-${day}`; // convert to YYYY-MM-DD
+                                datePart = `${year}-${month}-${day}`; 
                             }
 
                             if (col.endsWith("_date")) {
@@ -451,7 +441,7 @@ const DB = {
                             }
                         } else {
                             console.warn(`Invalid date format for column: ${originalCol}, Value: ${row[originalCol]}`);
-                            values.push(null); // Handle as necessary
+                            values.push(null); 
                         }
                     } else {
                         values.push(null);
@@ -459,7 +449,7 @@ const DB = {
                 } else {
                     values.push(
                         row[col] instanceof Date
-                            ? row[col].toISOString().split('T')[0] // Extract only the date part (yyyy-mm-dd)
+                            ? row[col].toISOString().split('T')[0] 
                             : row[col]
                     );
                 }
@@ -470,8 +460,7 @@ const DB = {
         db.exec("COMMIT");
         stmt.finalize();
         if (typeof db !== 'undefined' && db) {
-            // console.log("DB ready, setting up ticket table.");
-            fetchTickets(); // Fetch data and perform initial render
+            fetchTickets(); 
             setupEventListeners();
        } else {
            console.error("SQLite DB object 'db' not found. Cannot initialize ticket table.");
@@ -559,14 +548,12 @@ async function drawTables() {
 // ------------------ Query Form Submission ------------------
 async function onQuerySubmit(e) {
     e.preventDefault();
-    // showGlobalLoading();
     try {
         const formData = new FormData(e.target);
         const query = formData.get("query");
         DB.context = formData.get("context") || "";
         render("", $result);
 
-        // Use LLM to generate SQL for the main query.
         const result = await llm({
             system: `You are an expert SQLite query writer. The user has a SQLite dataset.
   
@@ -699,13 +686,9 @@ async function updateMultipleColumns(table, columnDefinitions) {
                         return rowValues;
                     });
 
-                    // console.log("Bulk Values before transaction:", bulkValues);
-
-                    // Execute in transaction
                     db.exec("BEGIN TRANSACTION");
                     try {
                         bulkValues.forEach(values => {
-                            // console.log("Binding values:", values);
                             updateStmt.bind(values).stepReset();
                         });
 
@@ -816,37 +799,32 @@ function download(content, filename, type) {
 
 // --- Ticket Table Logic ---
 const ticketTableContainer = document.getElementById('ticket-table');
-const ticketTableContent = document.getElementById('ticket-table-content'); // Target the inner container
+const ticketTableContent = document.getElementById('ticket-table-content'); 
 const tableBody = document.getElementById('ticket-table-body');
 
 // --- State Variables ---
-let tickets = []; // Full dataset (or current view if server-side pagination)
+let tickets = []; 
 let filteredTickets = [];
-let currentSort = { col: '"Ticket status"', dir: 'ASC' }; // Default sort
+let currentSort = { col: '"Ticket status"', dir: 'ASC' }; 
 let currentFilters = {
-    status: 'all', // From summary buttons
+    status: 'all',
     classification: 'all',
     sla: 'all',
     assignedTo: 'all',
     search: ''
 };
 let currentPage = 1;
-const itemsPerPage = 10; // Match the image's pagination hint (adjust as needed)
+const itemsPerPage = 10; 
 let totalTickets = 0;
 let totalFilteredTickets = 0;
 
-// --- Helper Functions for Rendering Cells ---
-
-// Function to format date string (adjust based on actual DB format)
 function formatTicketDate(dateStr) {
     if (!dateStr) return 'N/A';
     try {
-        // Attempt to parse common formats. Adjust regex/parsing as needed.
-        // Example: Assuming "YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DD"
-        const date = new Date(dateStr.replace(' ', 'T') + 'Z'); // Treat as UTC if no timezone
+        
+        const date = new Date(dateStr.replace(' ', 'T') + 'Z'); 
         if (isNaN(date.getTime())) {
-             // Try another format like "Wed 9 Apr, 11:22 AM" - more complex parsing needed
-             // For simplicity, return original if parsing fails broadly
+             
              return dateStr;
         }
 
@@ -860,7 +838,7 @@ function formatTicketDate(dateStr) {
         });
     } catch (e) {
         console.warn("Date formatting error for:", dateStr, e);
-        return dateStr; // Fallback
+        return dateStr; 
     }
 }
 
@@ -872,7 +850,6 @@ function renderStatus(status) {
         if (lowerStatus.includes('resolved')) statusClass = 'status-resolved';
         else if (lowerStatus.includes('progress')) statusClass = 'status-in-progress';
         else if (lowerStatus.includes('closed')) statusClass = 'status-closed';
-        // Add more conditions as needed
     }
 
     return html`
@@ -883,26 +860,26 @@ function renderStatus(status) {
 }
 
 function renderSLA(sla) {
-    let slaClass = 'sla-on-time'; // Default
-    let slaText = sla || 'On Time'; // Default text
-    let barStyle = 'width: 100%; background-color: #28a745;'; // Default green
+    let slaClass = 'sla-on-time'; 
+    let slaText = sla || 'On Time'; 
+    let barStyle = 'width: 100%; background-color: #28a745;'; 
 
     if (sla) {
         const lowerSla = sla.toLowerCase();
-        if (lowerSla.includes('left')) { // e.g., "2 hours left"
+        if (lowerSla.includes('left')) { 
             slaClass = 'sla-due-soon';
             slaText = sla;
-            barStyle = 'width: 60%; background: linear-gradient(to right, #ffc107, #dc3545);'; // Yellow-red gradient
-        } else if (lowerSla.includes('past') || lowerSla.includes('overdue')) { // e.g., "Past 2 hours"
+            barStyle = 'width: 60%; background: linear-gradient(to right, #ffc107, #dc3545);'; 
+        } else if (lowerSla.includes('past') || lowerSla.includes('overdue')) { 
             slaClass = 'sla-overdue';
             slaText = sla;
-            barStyle = 'width: 100%; background-color: #dc3545;'; // Red
+            barStyle = 'width: 100%; background-color: #dc3545;'; 
         } else if (lowerSla.includes('on time')) {
              slaClass = 'sla-on-time';
              slaText = 'On Time';
-             barStyle = 'width: 100%; background-color: #28a745;'; // Green
+             barStyle = 'width: 100%; background-color: #28a745;'; 
         }
-        // Add more specific conditions if needed
+
     }
 
     return html`
@@ -953,16 +930,16 @@ function renderTicketTable() {
         const matchStatus = currentFilters.status === 'all' || (ticket["Ticket status"] && ticket["Ticket status"].toLowerCase() === currentFilters.status.toLowerCase());
         // Special case for 'Unclassified' if it's a classification
          const matchClassification = currentFilters.classification === 'all' ||
-             (currentFilters.classification === 'Unclassified' && !ticket.Classification) || // Handle actual unclassified
+             (currentFilters.classification === 'Unclassified' && !ticket.Classification) || 
              (ticket.Classification && ticket.Classification === currentFilters.classification);
 
         // Handle 'Unclassified' potentially being a status filter from summary button
         const matchStatusOrClassification = (currentFilters.status === 'Unclassified')
-            ? (!ticket.Classification || (ticket["Ticket status"] && ticket["Ticket status"].toLowerCase() === 'unclassified')) // Check both possibilities
+            ? (!ticket.Classification || (ticket["Ticket status"] && ticket["Ticket status"].toLowerCase() === 'unclassified')) 
             : matchStatus;
 
 
-        const matchSla = currentFilters.sla === 'all' || (ticket.SLA && ticket.SLA === currentFilters.sla); // Simple match for now
+        const matchSla = currentFilters.sla === 'all' || (ticket.SLA && ticket.SLA === currentFilters.sla);
         const matchAssigned = currentFilters.assignedTo === 'all' || (ticket["Assignee name"] && ticket["Assignee name"] === currentFilters.assignedTo);
 
         return matchSearch && matchStatusOrClassification && matchClassification && matchSla && matchAssigned;
@@ -971,11 +948,7 @@ function renderTicketTable() {
 
     totalFilteredTickets = filteredTickets.length;
 
-    // --- Apply Sorting ---
-    // Note: SQLite sorting might be case-sensitive depending on collation. JS sort is generally case-sensitive.
-    // For robust sorting, ideally do it in SQL if possible, especially for large datasets.
-    // This JS sort is for demonstration on the fetched data.
-    const sortCol = currentSort.col.replace(/"/g, ''); // Remove quotes for JS property access
+    const sortCol = currentSort.col.replace(/"/g, ''); 
     filteredTickets.sort((a, b) => {
         let valA = a[sortCol];
         let valB = b[sortCol];
@@ -983,7 +956,7 @@ function renderTicketTable() {
         // Basic type handling for sorting
         if (typeof valA === 'string') valA = valA.toLowerCase();
         if (typeof valB === 'string') valB = valB.toLowerCase();
-        if (valA === null || valA === undefined) valA = -Infinity; // Treat nulls as lowest
+        if (valA === null || valA === undefined) valA = -Infinity; 
         if (valB === null || valB === undefined) valB = -Infinity;
 
         let comparison = 0;
@@ -1006,13 +979,11 @@ function renderTicketTable() {
             <td><input type="checkbox" class="form-check-input ticket-checkbox" data-ticket-id="${ticket['Ticket ID']}"></td>
             <td style="color:#2365ff; cursor:pointer">${ticket['Ticket ID']}</td>
             <td>
-  <div class="clamped-description" data-ticket-id="${ticket['Ticket ID']}">
-    ${ticket.description}
-  </div>
-  <div class="expand-toggle">▼ Show more</div>
-</td>
-
-
+            <div class="clamped-description" data-ticket-id="${ticket['Ticket ID']}">
+                ${ticket.description}
+            </div>
+            <div class="expand-toggle">▼ Show more</div>
+            </td>
             <td>${ticket.UPC || 'N/A'}</td>
             <td>${ticket.Classification || 'N/A'}</td>
             <td>${renderStatus(ticket['Ticket status'])}</td>
@@ -1026,11 +997,10 @@ function renderTicketTable() {
     render(rows.length ? rows : html`<tr><td colspan="9" class="text-center p-5">No tickets match the current filters.</td></tr>`, tableBody);
     attachExpandToggleListeners();
 
-    // --- Update UI Elements ---
     updatePaginationControls();
     updateSortIndicators();
     updateFilterDropdownLabels();
-    updateSummaryCounts(); // Update counts based on the *full* dataset
+    updateSummaryCounts(); 
 }
 
 function attachExpandToggleListeners() {
@@ -1039,14 +1009,12 @@ function attachExpandToggleListeners() {
     toggleElements.forEach(toggle => {
         const descDiv = toggle.previousElementSibling;
 
-        // Check if clamping actually applies
         const isOverflowing = descDiv.scrollHeight > descDiv.clientHeight + 1;
 
         if (!isOverflowing) {
-            toggle.style.display = 'none'; // Hide toggle if not clamped
+            toggle.style.display = 'none'; 
         }
 
-        // Add click handler if visible
         toggle.addEventListener('click', () => {
             const isExpanded = descDiv.classList.contains('expanded');
 
@@ -1062,21 +1030,15 @@ function attachExpandToggleListeners() {
 }
 
 
-// --- Data Fetching and Initialisation ---
 async function fetchTickets() {
-    // console.log("Fetching tickets...");
     try {
-        // Adjust SQL query as needed - fetch all columns required
         const sql = `SELECT * FROM database`;
         tickets = db.exec(sql, { rowMode: 'object' });
         totalTickets = tickets.length;
-        // console.log(`Fetched ${totalTickets} tickets.`);
 
-        // Populate dynamic filters
         populateDropdown('Classification', '.classification-dropdown-menu');
-        populateDropdown('"Assignee name"', '.assigned-dropdown-menu'); // Quote if needed
+        populateDropdown('"Assignee name"', '.assigned-dropdown-menu'); 
 
-        // Initial render
         currentPage = 1;
         renderTicketTable();
         setupRowClickListener();
@@ -1086,21 +1048,18 @@ async function fetchTickets() {
         render(html`<tr><td colspan="9" class="text-center p-5 text-danger">Error loading tickets: ${err.message}</td></tr>`, tableBody);
         tickets = [];
         totalTickets = 0;
-        updatePaginationControls(); // Ensure controls are disabled on error
+        updatePaginationControls(); 
         updateSummaryCounts();
     }
 }
 
-// --- Populate Dropdowns Dynamically ---
 function populateDropdown(columnName, menuSelector) {
     const menu = ticketTableContent.querySelector(menuSelector);
     if (!menu) return;
 
     try {
-        // Fetch distinct non-null values, limit for performance if necessary
         const distinctValues = db.exec(`SELECT DISTINCT ${columnName} FROM database WHERE ${columnName} IS NOT NULL ORDER BY ${columnName} LIMIT 100`, { rowMode: 'array' });
 
-        // Clear existing items except 'All'
         menu.querySelectorAll('li:not(:first-child)').forEach(li => li.remove());
 
         distinctValues.forEach(row => {
@@ -1142,14 +1101,13 @@ function updateSortIndicators() {
     ticketTableContent.querySelectorAll('thead th.sortable').forEach(th => {
         th.classList.remove('active-sort');
         const icon = th.querySelector('i.bi');
-        if (icon) icon.className = 'bi'; // Reset icon
+        if (icon) icon.className = 'bi'; 
 
         if (th.dataset.sortCol === currentSort.col) {
             th.classList.add('active-sort');
             if (icon) {
                 icon.classList.add(currentSort.dir === 'ASC' ? 'bi-arrow-up' : 'bi-arrow-down');
             } else {
-                 // Add icon if missing
                  th.insertAdjacentHTML('beforeend', ` <i class="bi ${currentSort.dir === 'ASC' ? 'bi-arrow-up' : 'bi-arrow-down'}"></i>`);
             }
         }
@@ -1168,12 +1126,11 @@ function updateFilterDropdownLabels() {
 }
 
 function updateSummaryCounts() {
-    // Calculate counts based on the *full* original dataset (`tickets`)
     const counts = {
         all: tickets.length,
-        new: tickets.filter(t => t['Ticket status']?.toLowerCase() === 'new').length, // Adjust status name if needed
+        new: tickets.filter(t => t['Ticket status']?.toLowerCase() === 'new').length, 
         'in-progress': tickets.filter(t => t['Ticket status']?.toLowerCase() === 'in-progress').length,
-        unclassified: tickets.filter(t => !t.Classification).length // Count tickets with no classification
+        unclassified: tickets.filter(t => !t.Classification).length 
     };
 
     document.getElementById('count-all').textContent = counts.all;
@@ -1187,7 +1144,6 @@ function updateSummaryCounts() {
 function setupEventListeners() {
     if (!ticketTableContent) return;
 
-    // Sorting
     ticketTableContent.querySelectorAll('thead th.sortable').forEach(th => {
         th.addEventListener('click', () => {
             const newSortCol = th.dataset.sortCol;
@@ -1198,12 +1154,11 @@ function setupEventListeners() {
             }
 
             currentSort = { col: newSortCol, dir: newSortDir };
-            currentPage = 1; // Reset to first page on sort
+            currentPage = 1; 
             renderTicketTable();
         });
     });
 
-    // Search
     const searchInput = ticketTableContent.querySelector('.search-input');
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
@@ -1213,16 +1168,13 @@ function setupEventListeners() {
         });
     }
 
-    // Refresh Button
     const refreshBtn = ticketTableContent.querySelector('.refresh-btn');
     if (refreshBtn) {
         refreshBtn.addEventListener('click', () => {
-            // Reset filters and sort? Or just refetch? Let's refetch.
-            fetchTickets(); // Re-fetch data from DB
+            fetchTickets(); 
         });
     }
 
-    // Pagination
     ticketTableContent.querySelectorAll('.pagination-prev').forEach(btn => {
         btn.addEventListener('click', () => {
             if (currentPage > 1) {
@@ -1241,7 +1193,6 @@ function setupEventListeners() {
          });
      });
 
-    // Filter Dropdowns (using event delegation on the container)
     ticketTableContent.addEventListener('click', (e) => {
         const target = e.target;
         if (target.matches('.classification-dropdown-menu .dropdown-item')) {
@@ -1277,17 +1228,15 @@ function setupEventListeners() {
              currentFilters.sla = 'all';
              currentFilters.assignedTo = 'all';
              currentFilters.search = '';
-             if(searchInput) searchInput.value = ''; // Clear search input visually
+             if(searchInput) searchInput.value = ''; 
 
-             // Apply the summary filter (might be status or a special case like 'unclassified')
-             currentFilters.status = statusFilter; // This will be handled in the main filter logic
+             currentFilters.status = statusFilter; 
 
              currentPage = 1;
              renderTicketTable();
          });
      });
 
-     // Select All Checkbox
      const selectAllCheckbox = document.getElementById('select-all-tickets');
      if (selectAllCheckbox) {
          selectAllCheckbox.addEventListener('change', (e) => {
@@ -1297,7 +1246,6 @@ function setupEventListeners() {
          });
      }
 
-     // Individual Checkbox changes -> uncheck Select All
      tableBody.addEventListener('change', (e) => {
          if (e.target.classList.contains('ticket-checkbox')) {
              if (!e.target.checked && selectAllCheckbox) {
@@ -1372,11 +1320,13 @@ async function setupRowClickListener() {
     const llmContentContainer = document.getElementById('llm-content');
     const assistHistoryTab = document.getElementById('assist-history-tab');
     tableBody.addEventListener('click', async (e) => {
+        document.getElementById('back-to-home-btn').style.display = 'none';
         const td = e.target.closest('td');
         const tr = e.target.closest('tr');
         if (!td || !tr) return;
+
         switchAssistTab('summary');
-        // Make sure the click was specifically on the Ticket ID cell (second column)
+
         const cells = Array.from(tr.children);
         if (td !== cells[1]) return;
 
@@ -1386,7 +1336,6 @@ async function setupRowClickListener() {
         const ticket = tickets.find(t => t['Ticket ID']?.toString() === ticketId);
         if (!ticket) return;
 
-        // Show loading spinners
         emailContentDiv.innerHTML = `
             <div class="text-muted fst-italic p-3">
             <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
@@ -1469,23 +1418,15 @@ async function setupRowClickListener() {
         
         let ticketIdsArray = similar_ticket_response.trim();
 
-        // Clean the response string by removing the surrounding brackets and extra spaces
-        ticketIdsArray = ticketIdsArray.replace(/[\[\]\s]/g, ''); // Remove brackets and spaces
+        ticketIdsArray = ticketIdsArray.replace(/[\[\]\s]/g, ''); 
 
-        // Now, split the string by commas to get an array of IDs
-        ticketIdsArray = ticketIdsArray.split(',').map(id => id.trim()); // Ensure each ID is trimmed
+        ticketIdsArray = ticketIdsArray.split(',').map(id => id.trim()); 
 
-        console.log("Cleaned ticketIdsArray:", ticketIdsArray);
-
-        // Now, proceed with the rest of the logic
         const similarTicketDetails = ticketIdsArray.map(ticketId => {
             return tickets.find(t => t['Ticket ID']?.toString() === ticketId.toString());
-        }).filter(t => t); // Filter out any undefined values
+        }).filter(t => t); 
 
-        // Debugging the similarTicketDetails
-        console.log("Similar ticket details:", similarTicketDetails);
-
-        // Create the HTML for the table
+        
         let tableHTML = `
             <table class="table table-striped">
                 <thead>
@@ -1513,24 +1454,20 @@ async function setupRowClickListener() {
         assistHistoryTab.innerHTML = tableHTML;
     });
 
-    // Delegated click listener on similar ticket table
     assistHistoryTab.addEventListener('click', (event) => {
         const clickedCell = event.target.closest('td');
         const clickedRow = event.target.closest('tr');
         if (!clickedCell || !clickedRow) return;
 
-        // Ensure it's the first column (Ticket ID)
         const cellIndex = Array.from(clickedRow.children).indexOf(clickedCell);
-        if (cellIndex !== 0) return; // Only react to first column clicks
+        if (cellIndex !== 0) return; 
 
         const clickedId = clickedCell.textContent.trim();
         const ticketData = tickets.find(t => t['Ticket ID']?.toString() === clickedId);
         if (!ticketData) return;
 
-        // Hide the similar tickets table
         assistHistoryTab.style.display = 'none';
 
-        // Create or show a detail container
         let relatedDetailContainer = document.getElementById('related-ticket-detail');
         if (!relatedDetailContainer) {
             relatedDetailContainer = document.createElement('div');
@@ -1541,7 +1478,6 @@ async function setupRowClickListener() {
             relatedDetailContainer.style.marginTop = '10px';
             document.getElementById('assist-history-tab').parentElement.appendChild(relatedDetailContainer);
         }
-{/* <h6 style="margin: 0;">Ticket ID: ${ticketData['Ticket ID']}</h6> */}
         relatedDetailContainer.innerHTML = `
             <div style="display: flex; justify-content: flex-end; align-items: center;">
                 <button id="close-related-ticket" class="btn btn-sm btn-outline-secondary" style="font-size:0.8rem;">
@@ -1555,7 +1491,6 @@ async function setupRowClickListener() {
         `;
         relatedDetailContainer.style.display = 'block';
 
-        // Close handler
         document.getElementById('close-related-ticket').addEventListener('click', () => {
             relatedDetailContainer.style.display = 'none';
             assistHistoryTab.style.display = 'block';
@@ -1563,10 +1498,10 @@ async function setupRowClickListener() {
     });
 
 
-    // Back button handler
     const backBtn = document.getElementById('back-to-table');
     if (backBtn) {
         backBtn.addEventListener('click', () => {
+            document.getElementById('back-to-home-btn').style.display = 'block';
             const ticketTable = document.querySelector('#ticket-table-content .table-responsive > table');
             const filtersRow1 = document.querySelector('.filters-row1');
             const filtersRow2 = document.querySelector('.filters-row2');
@@ -1586,23 +1521,52 @@ async function setupRowClickListener() {
 
 function renderTicketDetail(ticket) {
     return `
-        <div style="display: flex; flex-wrap: wrap; gap: 16px;">
-            <div style="flex: 1 1 22%;"><strong>Ticket ID:</strong> ${ticket['Ticket ID'] || 'N/A'}</div>
-            <div style="flex: 1 1 22%;"><strong>UPC:</strong> ${ticket.UPC || 'N/A'}</div>
-            <div style="flex: 1 1 22%;"><strong>Classification:</strong> ${ticket.Classification || 'N/A'}</div>
-            <div style="flex: 1 1 22%;"><strong>Status:</strong> ${ticket['Ticket status'] || 'N/A'}</div>
-
-            <div style="flex: 1 1 22%;"><strong>Assigned On:</strong> ${ticket['Ticket created - Date'] || 'N/A'}</div>
-            <div style="flex: 1 1 22%;"><strong>Assigned To:</strong> ${ticket['Assignee name'] || 'N/A'}</div>
-            <div style="flex: 1 1 22%;"><strong>SLA Status:</strong> ${ticket.SLA || 'N/A'}</div>
-            <div style="flex: 1 1 22%;"><strong>Priority:</strong> ${ticket.Priority || 'N/A'}</div>
-
-            <div style="flex: 1 1 22%;"><strong>Triage Team:</strong> ${ticket.Triaging || 'N/A'}</div>
-            <div style="flex: 1 1 22%;"><strong>Sentiment:</strong> ${ticket.Sentiments || 'N/A'}</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+        <div style="flex: 0 1 auto; background-color: #f5f5f5; border: 1px solid #ccc; border-radius: 999px; padding: 5px 10px; 
+            box-shadow: 1px 1px 5px rgba(0,0,0,0.05); white-space: nowrap;">
+            <strong style="margin-right: 3px; color: #333;">Ticket ID:</strong> ${ticket['Ticket ID'] || 'N/A'}
         </div>
-        <div style="margin-top: 16px;">
-            <p><strong>Description:</strong> ${ticket.description || 'N/A'}</p>
+        <div style="flex: 0 1 auto; background-color: #f5f5f5; border: 1px solid #ccc; border-radius: 999px; padding: 5px 10px; 
+            box-shadow: 1px 1px 5px rgba(0,0,0,0.05); white-space: nowrap;">
+            <strong style="margin-right: 3px; color: #333;">UPC:</strong> ${ticket.UPC || 'N/A'}
         </div>
+        <div style="flex: 0 1 auto; background-color: #f5f5f5; border: 1px solid #ccc; border-radius: 999px; padding: 5px 10px; 
+            box-shadow: 1px 1px 5px rgba(0,0,0,0.05); white-space: nowrap;">
+            <strong style="margin-right: 3px; color: #333;">Classification:</strong> ${ticket.Classification || 'N/A'}
+        </div>
+        <div style="flex: 0 1 auto; background-color: #f5f5f5; border: 1px solid #ccc; border-radius: 999px; padding: 5px 10px; 
+            box-shadow: 1px 1px 5px rgba(0,0,0,0.05); white-space: nowrap;">
+            <strong style="margin-right: 3px; color: #333;">Status:</strong> ${ticket['Ticket status'] || 'N/A'}
+        </div>
+        <div style="flex: 0 1 auto; background-color: #f5f5f5; border: 1px solid #ccc; border-radius: 999px; padding: 5px 10px; 
+            box-shadow: 1px 1px 5px rgba(0,0,0,0.05); white-space: nowrap;">
+            <strong style="margin-right: 3px; color: #333;">Assigned On:</strong> ${ticket['Ticket created - Date'] || 'N/A'}
+        </div>
+        <div style="flex: 0 1 auto; background-color: #f5f5f5; border: 1px solid #ccc; border-radius: 999px; padding: 5px 10px; 
+            box-shadow: 1px 1px 5px rgba(0,0,0,0.05); white-space: nowrap;">
+            <strong style="margin-right: 3px; color: #333;">Assigned To:</strong> ${ticket['Assignee name'] || 'N/A'}
+        </div>
+        <div style="flex: 0 1 auto; background-color: #f5f5f5; border: 1px solid #ccc; border-radius: 999px; padding: 5px 10px; 
+            box-shadow: 1px 1px 5px rgba(0,0,0,0.05); white-space: nowrap;">
+            <strong style="margin-right: 3px; color: #333;">SLA Status:</strong> ${ticket.SLA || 'N/A'}
+        </div>
+        <div style="flex: 0 1 auto; background-color: #f5f5f5; border: 1px solid #ccc; border-radius: 999px; padding: 5px 10px; 
+            box-shadow: 1px 1px 5px rgba(0,0,0,0.05); white-space: nowrap;">
+            <strong style="margin-right: 3px; color: #333;">Priority:</strong> ${ticket.Priority || 'N/A'}
+        </div>
+        <div style="flex: 0 1 auto; background-color: #f5f5f5; border: 1px solid #ccc; border-radius: 999px; padding: 5px 10px; 
+            box-shadow: 1px 1px 5px rgba(0,0,0,0.05); white-space: nowrap;">
+            <strong style="margin-right: 3px; color: #333;">Triage Team:</strong> ${ticket.Triaging || 'N/A'}
+        </div>
+        <div style="flex: 0 1 auto; background-color: #f5f5f5; border: 1px solid #ccc; border-radius: 999px; padding: 5px 10px; 
+            box-shadow: 1px 1px 5px rgba(0,0,0,0.05); white-space: nowrap;">
+            <strong style="margin-right: 3px; color: #333;">Sentiment:</strong> ${ticket.Sentiments || 'N/A'}
+        </div>
+    </div>
+
+    <div style="margin-top: 16px;">
+        <p><strong>Description:</strong> ${ticket.description || 'N/A'}</p>
+    </div>
     `;
 }
 
