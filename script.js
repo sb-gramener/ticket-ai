@@ -183,7 +183,7 @@ render(
             />
         </div>
         `
-        : html`<a class="btn btn-primary" href="https://llmfoundry.straivedemo.com/">
+        : html`<a class="btn btn-primary btn-sm mt-2" href="https://llmfoundry.straivedemo.com/">
           Sign in to upload files
         </a>`,
     $upload
@@ -817,6 +817,11 @@ let currentPage = 1;
 const itemsPerPage = 10; 
 let totalTickets = 0;
 let totalFilteredTickets = 0;
+let emailDraftState = {
+  ticketData: null,
+  summaryAndActionItems: "",
+  currentEmailDraft: ""
+};
 
 function formatTicketDate(dateStr) {
     if (!dateStr) return 'N/A';
@@ -1257,6 +1262,9 @@ function setupEventListeners() {
 }
 
 async function summaryllm({ system, user }) {
+    if(!token){
+        console.log("Token not recieved");
+    }
     const response = await fetch("https://llmfoundry.straivedemo.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -1282,26 +1290,106 @@ async function summaryllm({ system, user }) {
     return data.choices?.[0]?.message?.content || "";
   }
   
-  async function generateEmailDraft(ticketData, summary) {
-    const systemContent = `
-        You are an assistant that drafts professional emails based on ticket data and summaries. 
-        The email should be formal, clear, and concise, providing relevant details and a clear call to action.
-    `;
+//   async function generateEmailDraft(ticketData, summary) {
+//     const systemContent = `
+//         You are an assistant that drafts professional emails based on ticket data and summaries. 
+//         The email should be formal, clear, and concise, providing relevant details and a clear call to action.
+//     `;
     
-    const userContent = `
-        Please generate a professional email draft based on the following ticket data and summary:
+//     const userContent = `
+//         Please generate a professional email draft based on the following ticket data and summary:
         
-        Tickets Data: ${JSON.stringify(ticketData, null, 2)}
-        Summary: ${summary}
-    `;
+//         Tickets Data: ${JSON.stringify(ticketData, null, 2)}
+//         Summary: ${summary}
+//     `;
     
-    try {
-        const emailDraft = await summaryllm({ system: systemContent, user: userContent });
-        displayEmailDraft(marked.parse(emailDraft));
-    } catch (error) {
-        console.error("Error generating email draft:", error);
-    }
+//     try {
+//         const emailDraft = await summaryllm({ system: systemContent, user: userContent });
+//         displayEmailDraft(marked.parse(emailDraft));
+//     } catch (error) {
+//         console.error("Error generating email draft:", error);
+//     }
+// }
+
+async function generateEmailDraft(ticketData, summary) {
+  const systemContent = `
+    You are an assistant that drafts professional emails based on ticket data and summaries.
+    The email should be formal, clear, and concise, providing relevant details and a clear call to action.
+  `;
+  const userContent = `
+    Please generate a professional email draft based on the following ticket data and summary:
+    Tickets Data: ${JSON.stringify(ticketData, null, 2)}
+    Summary and Action Items: ${summary}
+  `;
+
+  try {
+    const emailDraft = await summaryllm({ system: systemContent, user: userContent });
+    emailDraftState.ticketData = ticketData;
+    emailDraftState.summaryAndActionItems = summary;
+    emailDraftState.currentEmailDraft = emailDraft;
+
+    displayEmailDraft(marked.parse(emailDraft));
+    // document.getElementById('investigation-box').style.display = 'block';
+  } catch (error) {
+    console.error("Error generating email draft:", error);
+  }
 }
+
+async function redraftEmailDraft(investigationSuggestions) {
+  if (!emailDraftState.ticketData || !emailDraftState.summaryAndActionItems || !emailDraftState.currentEmailDraft) {
+    alert("Missing required data for redrafting the email.");
+    return;
+  }
+
+  if (!investigationSuggestions.trim()) {
+    alert("Please enter suggestions or key points for redrafting.");
+    return;
+  }
+
+  const systemContent = `
+    You are an assistant that drafts professional emails based on ticket data, summaries, previous email drafts, and additional suggestions.
+    The email should be formal, clear, and concise, providing relevant details and a clear call to action.
+  `;
+
+  const userContent = `
+Please redraft the email using the following details:
+
+Ticket Data:
+${JSON.stringify(emailDraftState.ticketData, null, 2)}
+
+Summary and Action Items:
+${emailDraftState.summaryAndActionItems}
+
+Current Email Draft:
+${emailDraftState.currentEmailDraft}
+
+Additional Suggestions:
+${investigationSuggestions}
+  `;
+
+  // Show loading feedback
+  const emailContentDiv = document.getElementById('email-llm-content');
+  emailContentDiv.innerHTML = `
+    <div class="text-muted fst-italic p-3">
+      <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+      Redrafting Email...
+    </div>
+  `;
+
+  try {
+    const redraftedEmail = await summaryllm({ system: systemContent, user: userContent });
+    emailDraftState.currentEmailDraft = redraftedEmail;
+    displayEmailDraft(marked.parse(redraftedEmail));
+  } catch (error) {
+    console.error("Error redrafting email:", error);
+    emailContentDiv.innerHTML = `<p class="text-danger">Failed to redraft email. Please try again.</p>`;
+  }
+}
+
+document.getElementById('redraft-email-btn').addEventListener('click', () => {
+  const suggestions = document.getElementById('investigation-input').value;
+  redraftEmailDraft(suggestions);
+});
 
 function displayEmailDraft(emailDraft) {
     const emailContentDiv = document.getElementById('email-llm-content');
@@ -1373,7 +1461,7 @@ async function setupRowClickListener() {
         }
 
         const llmResponse = await summaryllm({
-            system: "You are an assistant that helps generate summaries and action items for tickets. Process all provided fields and create a actionable summary and list of action items. Respond in markdown content and dont use big headings. Try to use smaller headings like h6 or just bold headings and a professional response.",
+            system: "You are an assistant that helps generate summaries and action items for tickets. Process all provided fields and create a actionable summary and list of action items without repeating the given fields. Respond in markdown content and dont use big headings. Try to use smaller headings like h6 or just bold headings and a professional response.",
             user: `Here is the full ticket data: ${JSON.stringify(ticket)}.\nPlease summarize the ticket and provide action items.`,
         });
 
@@ -1625,7 +1713,14 @@ const emailContent = document.getElementById("email-llm-content");
 
 copyButton.addEventListener("click", function () {
     const content = emailContent.innerText;
-    navigator.clipboard.writeText(content);
+    
+    navigator.clipboard.writeText(content).then(() => {
+        copyButton.innerHTML = '<i class="bi bi-clipboard-check"></i> Copied';
+
+        setTimeout(() => {
+            copyButton.innerHTML = '<i class="bi bi-clipboard"></i> Copy';
+        }, 800);
+    });
 });
 
 editButton.addEventListener("click", function () {
