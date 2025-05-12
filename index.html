@@ -41,7 +41,6 @@
         }
 
         #ai-assitance {
-            resize: vertical;
             overflow: auto;
             border: 1px solid #ccc;
             border-radius: 0.25rem;
@@ -49,6 +48,17 @@
             min-height: 100px;
             max-height: auto;
         }
+
+        #investigation-box {
+            overflow: auto;
+            border: 1px solid #ccc;
+            border-radius: 0.25rem;
+            padding: 10px;
+            min-height: 100px;
+            max-height: auto;
+            margin-top: 10px;
+        }
+
 
         #email-content-assist {
             display: flex;
@@ -122,6 +132,47 @@
             margin-top: 4px;
             display: inline-block;
         }
+
+        
+        #investigation-assist {
+            display: flex;
+            gap: 10px; /* Optional: space between cards */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-top: 10px;
+            flex-wrap: nowrap; /* Prevent wrapping to a new row */
+        }
+
+        .investigation-card {
+            flex: 1; 
+            text-align: center;
+            padding: 5px;
+            border: 1px solid rgb(40 89 223);;
+            box-sizing: border-box;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #investigation-assist a {
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color:rgb(40 89 223);
+        }
+
+        .investigation-card.disabled {
+            opacity: 0.6;                 
+            cursor: not-allowed;         
+        }
+
+        .investigation-card.disabled a {
+            color: grey;                  /* Dimmed text */
+            pointer-events: none;         /* Ensure link itself isn't clickable */
+            text-decoration: none;
+        }
+
+
     </style>
 
 </head>
@@ -148,7 +199,8 @@
         <div id="app-overview" style="max-width:80%; margin-top:4rem;padding:32px 24px;margin-left:2rem;">
             <h2>Welcome to Ticket AI Assist</h2>
             <p>
-                Unlock the future of ticket management with Ticket AI Assist! This smart platform streamlines every step of the ticket lifecycle, boosting your workflow's efficiency and accuracy.
+                Unlock the future of ticket management with Ticket AI Assist! This smart platform streamlines every step
+                of the ticket lifecycle, boosting your workflow's efficiency and accuracy.
             </p>
             <p>
                 Ticket AI Assist enhances efficiency throughout the entire ticket lifecycle by:
@@ -156,13 +208,18 @@
             <ul style="text-align:left;">
                 <li><b>Classifying:</b> Tickets are intelligently classified to streamline processing.</li>
                 <li><b>Assigning:</b> Tickets are directly routed to the right resolver groups and SMEs.</li>
-                <li><b>Summarizing:</b> Key details are summarized clearly, enabling SMEs to quickly understand the issue.</li>
-                <li><b>Providing Insights:</b> Actionable insights help SMEs investigate and resolve tickets effectively.</li>
-                <li><b>Drafting Responses:</b> Responses are automatically drafted, aligned with SOPs, guidelines, and SME inputs.</li>
-                <li><b>Identifying Similar Tickets:</b> Identifies similar tickets from past interactions and from the same user for faster resolution.</li>
+                <li><b>Summarizing:</b> Key details are summarized clearly, enabling SMEs to quickly understand the
+                    issue.</li>
+                <li><b>Providing Insights:</b> Actionable insights help SMEs investigate and resolve tickets
+                    effectively.</li>
+                <li><b>Drafting Responses:</b> Responses are automatically drafted, aligned with SOPs, guidelines, and
+                    SME inputs.</li>
+                <li><b>Identifying Similar Tickets:</b> Identifies similar tickets from past interactions and from the
+                    same user for faster resolution.</li>
             </ul>
             <p>
-                Empower your team with AI-driven ticket management for improved accuracy, speed, and customer satisfaction.
+                Empower your team with AI-driven ticket management for improved accuracy, speed, and customer
+                satisfaction.
             </p>
             <p>
                 Ready to experience the power of AI in your support operations?
@@ -260,12 +317,12 @@
                             class="badge bg-secondary" id="count-all">0</span></button>
                     <button class="btn btn-sm filter-summary-btn" data-status-filter="New">New Mails <span
                             class="badge bg-secondary" id="count-new">0</span></button>
-                    
+
                     <button class="btn btn-sm filter-summary-btn" data-status-filter="In-progress">In Progress <span
                             class="badge bg-secondary" id="count-in-progress">0</span></button>
                     <button class="btn btn-sm filter-summary-btn" data-status-filter="Unclassified">Unclassified <span
                             class="badge bg-secondary" id="count-unclassified">0</span></button>
-                
+
                 </div>
 
                 <!-- Ticket Table -->
@@ -325,6 +382,19 @@
                                 </div>
                                 <div id="email-llm-content" style="padding:2px" contenteditable="false">
                                 </div>
+                            </div>
+                            <div id="investigation-box">
+                                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ccc; padding-bottom: 8px;">
+                                    <p style="font-weight: 600; font-size: 1rem; color: #686262; margin: 0;">Investigation Inputs</p>
+                                </div><br/>
+                                <textarea id="investigation-input" rows="4" style="width: 100%;border-radius: 0.25rem;border-color: #ccc;padding: 5px;" placeholder="Add your additional investigations here..."></textarea>
+                                <button id="redraft-email-btn" style="margin-top: 8px;" class="btn btn-sm btn-secondary">Redraft Email</button>
+                            </div>
+                            <div id="investigation-assist">
+                                <p style="font-weight: 600; font-size: 1rem; color: #686262; margin: 0;padding-top:2px">Investigation Agents: </p>                                <div class="investigation-card active"><a href="https://royaltydatachat.straivedemo.com/" target="_blank">Royalty AI</a></div>
+                                <div class="investigation-card active"><a href="https://sb-gramener.github.io/Metadata-AI/" target="_blank">Metadata AI</a></div>
+                                <div class="investigation-card disabled"><a href="#" tabindex="-1" aria-disabled="true" target="_blank">Invoice AI</a></div>
+                                <div class="investigation-card disabled"><a href="#" tabindex="-1" aria-disabled="true" target="_blank">DRM AI</a></div>
                             </div>
                         </div>
 
