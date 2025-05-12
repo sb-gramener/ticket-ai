@@ -1609,7 +1609,10 @@ async function setupRowClickListener() {
 
 function renderTicketDetail(ticket) {
     return `
-        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ccc; padding-bottom: 8px; margin-bottom:10px">
+            <p style="font-weight: 600; font-size: 1rem; color: #686262; margin: 0;">Ticket Details</p>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;margin-top:10px;">
         <div style="flex: 0 1 auto; background-color: #f5f5f5; border: 1px solid #ccc; border-radius: 999px; padding: 5px 10px; 
             box-shadow: 1px 1px 5px rgba(0,0,0,0.05); white-space: nowrap;">
             <strong style="margin-right: 3px; color: #333;">Ticket ID:</strong> ${ticket['Ticket ID'] || 'N/A'}
