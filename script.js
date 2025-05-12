@@ -1729,5 +1729,10 @@ copyButton.addEventListener("click", function () {
 editButton.addEventListener("click", function () {
     const isEditable = emailContent.getAttribute("contenteditable") === "true";
     emailContent.setAttribute("contenteditable", !isEditable);
+    if (isEditable) {
+        editButton.innerHTML = `<i class="bi bi-pencil-square"></i> Enable Editing`;
+    } else {
+        editButton.innerHTML = `<i class="bi bi-pencil-square"></i> Disable Editing`;
+    }
 });
 
